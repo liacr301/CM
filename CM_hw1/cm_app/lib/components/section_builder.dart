@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class SectionBuilder extends StatelessWidget {
   const SectionBuilder({
-    Key? key,
+    super.key,
     required this.sectionTitle,
     required this.sectionBodyBuilder,
     this.titlePadding = const EdgeInsets.only(left: 16, bottom: 18),
     this.padding = const EdgeInsets.only(bottom: 36),
-  }) : super(key: key);
+  });
 
   final String sectionTitle;
   final Widget Function(BuildContext) sectionBodyBuilder;

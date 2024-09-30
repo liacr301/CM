@@ -4,7 +4,7 @@ import '../components/section_builder.dart';
 import '../const.dart';
 
 class SearchPage extends StatelessWidget {
-  const SearchPage({Key? key}) : super(key: key);
+  const SearchPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -98,9 +98,9 @@ class SearchPage extends StatelessWidget {
 
 class SearchSectionItemBuilder extends StatelessWidget {
   const SearchSectionItemBuilder({
-    Key? key,
+    super.key,
     required this.list,
-  }) : super(key: key);
+  });
 
   final List list;
 

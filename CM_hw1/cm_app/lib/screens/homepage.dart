@@ -4,7 +4,7 @@ import '../components/section_builder.dart';
 import '../const.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // title-and-toolbar-buttons
+              // Title and toolbar buttons
               Padding(
                 padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
                 child: Row(
@@ -48,7 +48,7 @@ class HomePage extends StatelessWidget {
                   ],
                 ),
               ),
-              // playlist-grid-section
+              // Playlist grid section
               Padding(
                 padding: const EdgeInsets.only(left: 16, right: 16, bottom: 36),
                 child: SizedBox(
@@ -71,7 +71,7 @@ class HomePage extends StatelessWidget {
                           padding: const EdgeInsets.only(right: 20),
                           child: Row(
                             children: [
-                              // img
+                              // Image
                               Container(
                                 width: 56,
                                 decoration: BoxDecoration(
@@ -87,7 +87,7 @@ class HomePage extends StatelessWidget {
                               const SizedBox(
                                 width: 8,
                               ),
-                              // text
+                              // Text
                               Flexible(
                                 child: Text(kPlaylistGrid[index].title,
                                     style: const TextStyle(
@@ -106,9 +106,16 @@ class HomePage extends StatelessWidget {
               ),
               // New songs added section
               SectionBuilder(
-                  sectionTitle: 'New songs added',
-                  sectionBodyBuilder: (context) {
-                    return Container(
+                sectionTitle: 'New songs added',
+                sectionBodyBuilder: (context) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => PlaylistInfo()),
+                      );
+                    },
+                    child: Container(
                       height: 145,
                       decoration: const BoxDecoration(
                         color: Color(0xff2E2F33),
@@ -117,7 +124,7 @@ class HomePage extends StatelessWidget {
                       margin: const EdgeInsets.only(right: 16, left: 16),
                       child: Row(
                         children: [
-                          // img
+                          // Image
                           Container(
                             width: 142,
                             decoration: const BoxDecoration(
@@ -130,13 +137,12 @@ class HomePage extends StatelessWidget {
                                   bottomLeft: Radius.circular(4)),
                             ),
                           ),
-                          // text
+                          // Text
                           Padding(
                             padding: const EdgeInsets.only(top: 16, right: 16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // title
                                 const Padding(
                                   padding: EdgeInsets.only(left: 16),
                                   child: Text("Viral hits",
@@ -151,7 +157,6 @@ class HomePage extends StatelessWidget {
                                 const SizedBox(
                                   height: 4,
                                 ),
-                                // description
                                 const Padding(
                                   padding: EdgeInsets.only(left: 16),
                                   child: SizedBox(
@@ -190,9 +195,11 @@ class HomePage extends StatelessWidget {
                           ),
                         ],
                       ),
-                    );
-                  }),
-              // podcast fir you section
+                    ),
+                  );
+                },
+              ),
+              // Podcast for you section
               SectionBuilder(
                 sectionTitle: 'Podcasts for you',
                 sectionBodyBuilder: (context) {
@@ -201,6 +208,7 @@ class HomePage extends StatelessWidget {
                   );
                 },
               ),
+              // Made for you section
               SectionBuilder(
                 sectionTitle: 'Made for you',
                 sectionBodyBuilder: (context) {
@@ -219,9 +227,9 @@ class HomePage extends StatelessWidget {
 
 class HomeSectionsItemsBuilder extends StatelessWidget {
   const HomeSectionsItemsBuilder({
-    Key? key,
+    super.key,
     required this.list,
-  }) : super(key: key);
+  });
 
   final List list;
 
@@ -242,7 +250,7 @@ class HomeSectionsItemsBuilder extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // img
+                // Image
                 Container(
                   width: 138,
                   height: 138,
@@ -255,7 +263,7 @@ class HomeSectionsItemsBuilder extends StatelessWidget {
                 const SizedBox(
                   height: 12,
                 ),
-                // name
+                // Name
                 SizedBox(
                   width: 135,
                   child: Text(list[index].title,
@@ -272,7 +280,7 @@ class HomeSectionsItemsBuilder extends StatelessWidget {
                 const SizedBox(
                   height: 4,
                 ),
-                // show-creator
+                // Show creator
                 SizedBox(
                   width: 135,
                   child: Text(list[index].creator ?? '',
@@ -290,6 +298,116 @@ class HomeSectionsItemsBuilder extends StatelessWidget {
             ),
           );
         }),
+      ),
+    );
+  }
+}
+
+// PlaylistInfo Page
+class PlaylistInfo extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color.fromARGB(255, 68, 126, 212), Colors.transparent],
+            stops: [0.0, 0.30],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 36, bottom: 80),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const Expanded(child: SizedBox()),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                      height: 500,
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                      ),
+                      margin: const EdgeInsets.only(right: 16, left: 16),
+                      alignment: Alignment.center,
+                      child: Column(children: [
+                        // Image
+                        Container(
+                          width: 200,
+                          height: 200,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                              image: DecorationImage(
+                                  image: NetworkImage(
+                                      'https://pbs.twimg.com/media/Dd67LcWVMAAjFrC.jpg'),
+                                  fit: BoxFit.cover),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10))),
+                        ),
+                        // Text
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16, right: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(left: 16),
+                                child: Text("Viral hits",
+                                    style: TextStyle(
+                                        color: Color(0xffffffff),
+                                        fontWeight: FontWeight.w900,
+                                        fontFamily: "Raleway",
+                                        fontStyle: FontStyle.normal,
+                                        fontSize: 30.0),
+                                    textAlign: TextAlign.left),
+                              ),
+                              const SizedBox(
+                                height: 4,
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.only(left: 16),
+                                child: SizedBox(
+                                  width: 350,
+                                  child: Text(
+                                    "Playlist • The Kid LAROI, Olivia Rodrigo, Ariana Gra...",
+                                    style: TextStyle(
+                                      color: Color(0xffa7a7a7),
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: "Raleway",
+                                      fontStyle: FontStyle.normal,
+                                      fontSize: 12.0,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    maxLines: 2,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]
+                    )
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

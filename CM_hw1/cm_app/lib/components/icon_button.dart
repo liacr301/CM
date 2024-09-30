@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 class IconButtonWidget extends StatelessWidget {
   const IconButtonWidget({
-    Key? key,
+    super.key,
     required this.icon,
     this.onTap,
-  }) : super(key: key);
+  });
 
   final IconData icon;
   final Function()? onTap;
