@@ -35,13 +35,13 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      color: Colors.yellow,
+      color: Colors.white,
       home: Scaffold(
         body: listScreens[tabIndex],
         bottomNavigationBar: BottomNavigationBar(
-            selectedItemColor: Colors.white,
-            unselectedItemColor: Colors.grey[400],
-            backgroundColor: Theme.of(context).primaryColor,
+            selectedItemColor: Colors.green.shade900,
+            unselectedItemColor: Colors.grey.shade900,
+            backgroundColor: Colors.white,
             currentIndex: tabIndex,
             onTap: (int index) {
               setState(() {
