@@ -18,7 +18,7 @@ class LibraryPage extends StatelessWidget {
             stops: [0.0, 0.30],
           ),
         ),
-        child: Padding(
+        child: Padding( 
           padding: const EdgeInsets.only(top: 36, bottom: 80),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
