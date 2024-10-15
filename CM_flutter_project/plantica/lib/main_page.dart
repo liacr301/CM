@@ -119,7 +119,7 @@ class _MainPageState extends State<MainPage>
             ],
           ),
         ),
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Colors.white,
       ),
     );
   }
