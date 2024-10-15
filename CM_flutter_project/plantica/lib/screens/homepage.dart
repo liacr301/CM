@@ -11,13 +11,18 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
-    return (Scaffold(
+    return Scaffold(
       appBar: AppBar(
-          title: Text(
-            'Your Plants...',
-            style: TextStyle(
+          title: Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Text(
+              'Your Plants...',
+              style: TextStyle(
+                fontSize: 24,
                 fontStyle: FontStyle.italic,
-                color: Color.fromRGBO(95, 113, 97, 1)),
+                color: Color.fromRGBO(95, 113, 97, 1),
+              ),
+            ),
           ),
           actions: <Widget>[
             IconButton(
@@ -26,26 +31,28 @@ class _HomeState extends State<Home> {
                 color: Color.fromRGBO(95, 113, 97, 1),
               ),
               tooltip: 'Settings',
-              //this is gonna change to a navigation push pop
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('This is a snackbar')));
               },
             ),
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_outlined,
-                color: Color.fromRGBO(95, 113, 97, 1),
+            Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.notifications_outlined,
+                  color: Color.fromRGBO(95, 113, 97, 1),
+                ),
+                tooltip: 'Notifications',
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('This is a snackbar')));
+                },
               ),
-              tooltip: 'Notifications',
-              //this is gonna change to a navigation push pop
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('This is a snackbar')));
-              },
             ),
           ]),
       body: Container(
+        padding: EdgeInsets.only(left: 4),
         decoration: BoxDecoration(),
         child: Expanded(
             child: ListView.builder(
@@ -57,8 +64,8 @@ class _HomeState extends State<Home> {
                       Row(
                         children: [
                           Container(
-                            width: 80,
-                            height: 80,
+                            width: 100,
+                            height: 100,
                             decoration: BoxDecoration(
                               borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(100),
@@ -81,7 +88,6 @@ class _HomeState extends State<Home> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          // Informações da planta
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,8 +114,8 @@ class _HomeState extends State<Home> {
                                 Row(
                                   children: [
                                     Container(
-                                      // Adiciona espaçamento interno no conteúdo
-                                      padding: const EdgeInsets.only(left: 8, right: 8),
+                                      padding: const EdgeInsets.only(
+                                          left: 8, right: 8),
                                       decoration: BoxDecoration(
                                         color:
                                             myPlants[index].state == 'Healthy'
@@ -118,8 +124,7 @@ class _HomeState extends State<Home> {
                                                         'Needs water'
                                                     ? Colors.red[300]
                                                     : Colors.blue[200],
-                                        borderRadius: BorderRadius.circular(
-                                            20), 
+                                        borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
                                         myPlants[index].state,
@@ -145,6 +150,13 @@ class _HomeState extends State<Home> {
                   );
                 })),
       ),
-    ));
+    );
+  }
+}
+
+class HomeWithoutPlants extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Container());
   }
 }
