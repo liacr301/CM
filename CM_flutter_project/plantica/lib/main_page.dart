@@ -13,26 +13,23 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int _tabIndex = 0; // Variable to store current tab index
+  int _tabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the TabController with 3 tabs (one for each screen)
     _tabController = TabController(length: 3, vsync: this);
 
-    // Add a listener to update the BottomNavigationBar's selected index when swiping
     _tabController.addListener(() {
       setState(() {
-        _tabIndex = _tabController.index; // Sync the tab index when swiping
+        _tabIndex = _tabController.index;
       });
     });
   }
 
   @override
   void dispose() {
-    _tabController
-        .dispose(); // Dispose of the controller when the widget is disposed
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -42,7 +39,6 @@ class _MainPageState extends State<MainPage>
       color: Color.fromRGBO(239, 234, 216, 0.7),
       home: Scaffold(
         body: TabBarView(
-          // Allow swiping between tabs
           controller: _tabController,
           children: [
             Home(),
@@ -55,67 +51,62 @@ class _MainPageState extends State<MainPage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Spacer(
-                  flex:
-                      2),
-
+              Spacer(flex: 2),
               IconButton(
                 icon: Icon(
                   Icons.home_outlined,
-                  size: 32, 
+                  size: 32,
                   color: _tabIndex == 0
                       ? Colors.green.shade900
                       : Colors.grey.shade600,
                 ),
                 onPressed: () {
                   setState(() {
-                    _tabIndex = 0; // Muda para a aba Home
+                    _tabIndex = 0;
                     _tabController.index = 0;
                   });
                 },
               ),
               Spacer(flex: 4),
               Container(
-                width: 60.0, 
+                width: 60.0,
                 height: 60.0,
                 decoration: BoxDecoration(
                   shape: BoxShape.rectangle,
-                  borderRadius: BorderRadius.circular(8), // Formato circular
-                  color: Colors.green.shade700, // Cor do círculo
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.green.shade700,
                 ),
                 child: IconButton(
                   icon: Icon(
                     Icons.photo_camera_outlined,
-                    size: 32, // Tamanho do ícone
-                    color: Colors.white, // Cor do ícone
+                    size: 32,
+                    color: Colors.white,
                   ),
                   onPressed: () {
                     setState(() {
-                      _tabIndex = 1; // Muda para a aba Scan
+                      _tabIndex = 1;
                       _tabController.index = 1;
                     });
                   },
                 ),
               ),
-              Spacer(flex: 4), // Espaçador entre Scan e Profile
-              // Ícone Profile no canto direito (agora centralizado)
+              Spacer(flex: 4),
               IconButton(
                 icon: Icon(
                   Icons.person_2_outlined,
-                  size: 32, // Aumenta o tamanho do ícone
+                  size: 32,
                   color: _tabIndex == 2
                       ? Colors.green.shade900
                       : Colors.grey.shade600,
                 ),
                 onPressed: () {
                   setState(() {
-                    _tabIndex = 2; // Muda para a aba Profile
+                    _tabIndex = 2;
                     _tabController.index = 2;
                   });
                 },
               ),
-              Spacer(
-                  flex: 2), // Espaçador para mover o último ícone para o centro
+              Spacer(flex: 2),
             ],
           ),
         ),

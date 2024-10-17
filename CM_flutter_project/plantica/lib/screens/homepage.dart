@@ -142,7 +142,7 @@ class PlantList extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16), // Espaço entre os itens
+              const SizedBox(height: 16), 
             ],
           );
         },
