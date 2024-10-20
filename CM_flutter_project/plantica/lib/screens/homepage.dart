@@ -50,7 +50,7 @@ class Home extends StatelessWidget {
         ],
       ),
       body: myPlants.isEmpty ? HomeWithoutPlants() : PlantList(),
-      backgroundColor: const Color.fromARGB(255, 255, 250, 233),
+      backgroundColor: Color(0xFFF5F0E6),
     );
   }
 }
