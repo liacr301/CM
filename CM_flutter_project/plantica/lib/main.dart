@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:plantica/main_page.dart';
+import 'package:plantica/screens/homepage.dart';
+import 'package:plantica/screens/login.dart';
+import 'package:plantica/screens/register.dart';
 
 void main() {
   runApp(MyApp());
@@ -19,7 +22,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
       ),
       debugShowCheckedModeBanner: false,
-      home: MainPage(),
+      home: Home(),
     );
   }
 }
