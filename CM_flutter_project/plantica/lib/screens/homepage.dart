@@ -7,7 +7,7 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 255, 250, 233),
+        backgroundColor: const Color(0xFFF3F4F6),
         title: Padding(
           padding: EdgeInsets.only(left: 8, top: 8),
           child: Text(
@@ -50,7 +50,7 @@ class Home extends StatelessWidget {
         ],
       ),
       body: myPlants.isEmpty ? HomeWithoutPlants() : PlantList(),
-      backgroundColor: Color(0xFFF5F0E6),
+      backgroundColor: Color(0xFFF3F4F6),
     );
   }
 }
