@@ -24,7 +24,7 @@ class _PlantinfopageState extends State<Plantinfopage> {
   Future<PlantIdentification?> _fetchPlantInfo(int plantId) async {
     final dbHelper = DatabaseHelper();
     return await dbHelper.getPlant(plantId);
-  }
+  } 
 
   @override
   Widget build(BuildContext context) {

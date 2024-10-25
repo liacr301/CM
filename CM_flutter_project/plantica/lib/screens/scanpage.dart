@@ -1,4 +1,5 @@
 // Importações e definições
+// TODO: ir para a main no add plant e na main chamar o plantinfopage quando carregas na planta
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
