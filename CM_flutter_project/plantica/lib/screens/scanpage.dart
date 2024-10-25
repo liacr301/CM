@@ -1,9 +1,11 @@
+// Importações e definições
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'plantinfopage.dart';
+import 'database_helper.dart';
 
 class Scan extends StatefulWidget {
   const Scan({super.key});
@@ -16,23 +18,21 @@ class _ScanState extends State<Scan> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
   String? _plantName;
-  String? _accessToken;
+  int? _plantId;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback para garantir que o widget está montado
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _showImageSourceDialog();
     });
   }
 
-  // Diálogo para escolher entre câmera e galeria
   Future<void> _showImageSourceDialog() async {
     await showDialog(
       context: context,
-      barrierDismissible: false, // Impede fechar o diálogo clicando fora
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Choose image source'),
@@ -63,14 +63,12 @@ class _ScanState extends State<Scan> {
     );
   }
 
-  // Função para converter imagem em base64
   Future<String> _imageToBase64(File imageFile) async {
     List<int> imageBytes = await imageFile.readAsBytes();
     return base64Encode(imageBytes);
   }
 
-  // Função para fazer a requisição à API
-  Future<void> _identifyPlant(String base64Image) async {
+  Future<void> _identifyAndSavePlant(String base64Image) async {
     setState(() {
       _isLoading = true;
     });
@@ -78,7 +76,7 @@ class _ScanState extends State<Scan> {
     try {
       final response = await http.post(
         Uri.parse(
-            'https://plant.id/api/v3/identification?details=common_names'),
+            'https://plant.id/api/v3/identification?details=common_names,url,description,taxonomy,inaturalist_id,edible_parts,watering,propagation_methods,best_watering,best_light_condition,best_soil_type,toxicity&language=en'),
         headers: {
           'Api-Key': 'KYRgRxXJyjuviR4rUORZ5sKej8zsaE5ixyPOqIUXP0cQWhpkc8',
           'Content-Type': 'application/json',
@@ -91,28 +89,17 @@ class _ScanState extends State<Scan> {
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
         if (data != null) {
-          print(data.toString());
-        } else {
-          print('No data received from API');
+          final plantInfo = PlantIdentification.fromJson(data);
+          
+          // Save to database and get plantId
+          final dbHelper = DatabaseHelper();
+          final int id = await dbHelper.insertPlant(plantInfo);
+          
+          setState(() {
+            _plantId = id;
+            _plantName = plantInfo.commonName;
+          });
         }
-
-        setState(() {
-          _accessToken = data['access_token'];
-          // Pegando o primeiro common name disponível da nova estrutura
-          if (data['result'] != null &&
-              data['result']['classification']['suggestions'].isNotEmpty &&
-              data['result']['classification']['suggestions'][0]['details']
-                      ['common_names'] !=
-                  null &&
-              data['result']['classification']['suggestions'][0]['details']
-                      ['common_names']
-                  .isNotEmpty) {
-            _plantName = data['result']['classification']['suggestions'][0]
-                ['details']['common_names'][0];
-          } else {
-            _plantName = 'Unknown Plant';
-          }
-        });
       }
     } catch (e) {
       print('Error: $e');
@@ -126,7 +113,6 @@ class _ScanState extends State<Scan> {
     }
   }
 
-  // Função para capturar a imagem
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(source: source);
@@ -136,16 +122,13 @@ class _ScanState extends State<Scan> {
           _image = File(pickedFile.path);
         });
 
-        // Converter imagem para base64 e fazer a requisição
         String base64Image = await _imageToBase64(_image!);
-        await _identifyPlant(base64Image);
+        await _identifyAndSavePlant(base64Image);
       } else {
-        // Se nenhuma imagem foi selecionada, mostra o diálogo novamente
         _showImageSourceDialog();
       }
     } catch (e) {
       print('Error picking image: $e');
-      // Em caso de erro, mostra o diálogo novamente
       _showImageSourceDialog();
     }
   }
@@ -163,7 +146,10 @@ class _ScanState extends State<Scan> {
               CircularProgressIndicator()
             else
               ScanPage(
-                  image: _image!, plantName: _plantName ?? 'Unknown Plant', accessToken: _accessToken ?? ''),
+                image: _image!,
+                plantName: _plantName ?? 'Unknown Plant',
+                plantId: _plantId,
+              ),
           ],
         ),
       ),
@@ -171,17 +157,15 @@ class _ScanState extends State<Scan> {
   }
 }
 
-
-
 class ScanPage extends StatelessWidget {
   final File image;
   final String plantName;
-  final String accessToken;
+  final int? plantId;
 
   const ScanPage({
     required this.image,
     required this.plantName,
-    required this.accessToken,
+    required this.plantId,
     Key? key,
   }) : super(key: key);
 
@@ -253,16 +237,16 @@ class ScanPage extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  if (accessToken != '') {
+                  if (plantId != null) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            Plantinfopage(accessToken: accessToken!),
+                            Plantinfopage(plantId: plantId!),
                       ),
                     );
                   } else {
-                    print('Access token is null');
+                    print('Plant ID is null');
                   }
                 },
                 child: Text('Add Plant'),
