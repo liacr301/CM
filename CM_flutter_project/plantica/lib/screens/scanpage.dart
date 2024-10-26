@@ -40,6 +40,7 @@ class _ScanMainPageState extends State<ScanMainPage> {
   bool _isConnected = true;
 
   @override
+  @override
   void initState() {
     super.initState();
     _checkConnectivity();
@@ -47,10 +48,11 @@ class _ScanMainPageState extends State<ScanMainPage> {
         .onConnectivityChanged
         .listen((ConnectivityResult result) {
       _updateConnectionStatus(result);
-    });
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showImageSourceDialog();
+      if (result != ConnectivityResult.none) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showImageSourceDialog();
+        });
+      }
     });
   }
 
@@ -189,46 +191,48 @@ class _ScanMainPageState extends State<ScanMainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
-      body: SingleChildScrollView(
-        child: Center(
-          child: _isConnected
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (_image == null)
-                      const Text('No image selected.')
-                    else if (_isLoading)
-                      const CircularProgressIndicator()
-                    else
-                      ScanResultPage(
-                        image: _image!,
-                        plantName: _plantName ?? 'Unknown Plant',
-                        plantId: _plantId,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Center(
+            child: _isConnected
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (_image == null)
+                        const Text('No image selected.')
+                      else if (_isLoading)
+                        const CircularProgressIndicator()
+                      else
+                        ScanResultPage(
+                          image: _image!,
+                          plantName: _plantName ?? 'Unknown Plant',
+                          plantId: _plantId,
+                        ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.wifi_off, size: 100, color: Colors.red),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'No internet connection',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                       ),
-                  ],
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.wifi_off, size: 100, color: Colors.red),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'No internet connection',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Please check your connection and try again.',
-                      style: TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _checkConnectivity,
-                      child: const Text('Try Again'),
-                    ),
-                  ],
-                ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Please check your connection and try again.',
+                        style: TextStyle(fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _checkConnectivity,
+                        child: const Text('Try Again'),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );
