@@ -2,8 +2,11 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
 
+// TODO: tirar o lastWatered e wateringFrequency do construtor
+
 class PlantIdentification {
   final int? id;
+  final int? userId;
   final String accessToken;
   final String commonName;
   final String imageUrl;
@@ -14,9 +17,12 @@ class PlantIdentification {
   final String bestLightCondition;
   final String bestSoilType;
   final String toxicity;
+  final String? lastWatered;
+  final String? wateringFrequency;
 
   PlantIdentification({
     this.id,
+    this.userId,
     required this.accessToken,
     required this.commonName,
     required this.imageUrl,
@@ -27,11 +33,14 @@ class PlantIdentification {
     required this.bestLightCondition,
     required this.bestSoilType,
     required this.toxicity,
+    this.lastWatered,
+    this.wateringFrequency,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'userId': userId,
       'access_token': accessToken,
       'common_name': commonName,
       'image_url': imageUrl,
@@ -42,13 +51,16 @@ class PlantIdentification {
       'best_light_condition': bestLightCondition,
       'best_soil_type': bestSoilType,
       'toxicity': toxicity,
+      'last_watered': lastWatered,
+      'watering_frequency': wateringFrequency,
     };
   }
 
   factory PlantIdentification.fromMap(Map<String, dynamic> map) {
     return PlantIdentification(
       id: map['id'],
-      accessToken: map['access_token'],
+      userId: map['userId'],
+      accessToken: map['access_token'] ?? '',
       commonName: map['common_name'],
       imageUrl: map['image_url'],
       scientificName: map['scientific_name'],
@@ -58,6 +70,8 @@ class PlantIdentification {
       bestLightCondition: map['best_light_condition'],
       bestSoilType: map['best_soil_type'],
       toxicity: map['toxicity'],
+      lastWatered: map['last_watered'],
+      wateringFrequency: map['watering_frequency'],
     );
   }
 
@@ -80,13 +94,49 @@ class PlantIdentification {
   }
 }
 
-class DatabaseHelper {
-  static final DatabaseHelper _instance = DatabaseHelper._internal();
+class User {
+  final int? id;
+  final String name;
+  final String username;
+  final String birthdate;
+  final String password;
+
+  User({
+    this.id,
+    required this.name,
+    required this.username,
+    required this.birthdate,
+    required this.password,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'username': username,
+      'birthdate': birthdate,
+      'password': password,
+    };
+  }
+
+  factory User.fromMap(Map<String, dynamic> map) {
+    return User(
+      id: map['id'],
+      name: map['name'],
+      username: map['username'],
+      birthdate: map['birthdate'],
+      password: map['password'],
+    );
+  }
+}
+
+class AppDatabase {
+  static final AppDatabase _instance = AppDatabase._internal();
   static Database? _database;
 
-  factory DatabaseHelper() => _instance;
+  factory AppDatabase() => _instance;
 
-  DatabaseHelper._internal();
+  AppDatabase._internal();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -95,7 +145,7 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'plants_database.db');
+    String path = join(await getDatabasesPath(), 'plant_app.db');
     return await openDatabase(
       path,
       version: 1,
@@ -104,9 +154,22 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    // Create users table
+    await db.execute('''
+      CREATE TABLE users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        username TEXT NOT NULL,
+        birthdate TEXT NOT NULL,
+        password TEXT NOT NULL
+      )
+    ''');
+
+    // Create plants table with all fields from both implementations
     await db.execute('''
       CREATE TABLE plants(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER,
         access_token TEXT,
         common_name TEXT,
         image_url TEXT,
@@ -116,11 +179,43 @@ class DatabaseHelper {
         best_watering TEXT,
         best_light_condition TEXT,
         best_soil_type TEXT,
-        toxicity TEXT
+        toxicity TEXT,
+        last_watered TEXT,
+        watering_frequency TEXT,
+        FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
   }
 
+  // User-related methods
+  Future<int> registerUser(String name, String username, String birthdate, String password) async {
+    final db = await database;
+    return await db.insert(
+      'users',
+      {
+        'name': name,
+        'username': username,
+        'birthdate': birthdate,
+        'password': password,
+      },
+    );
+  }
+
+  Future<User?> loginUser(String username, String password) async {
+    final db = await database;
+    List<Map<String, dynamic>> users = await db.query(
+      'users',
+      where: 'username = ? AND password = ?',
+      whereArgs: [username, password],
+    );
+
+    if (users.isNotEmpty) {
+      return User.fromMap(users.first);
+    }
+    return null;
+  }
+
+  // Plant-related methods
   Future<int> insertPlant(PlantIdentification plant) async {
     final db = await database;
     return await db.insert(
@@ -130,9 +225,13 @@ class DatabaseHelper {
     );
   }
 
-  Future<List<PlantIdentification>> getPlants() async {
+  Future<List<PlantIdentification>> getPlants({int? userId}) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('plants');
+    final List<Map<String, dynamic>> maps = await db.query(
+      'plants',
+      where: userId != null ? 'userId = ?' : null,
+      whereArgs: userId != null ? [userId] : null,
+    );
     return List.generate(maps.length, (i) => PlantIdentification.fromMap(maps[i]));
   }
 
@@ -165,6 +264,16 @@ class DatabaseHelper {
       'plants',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  Future<int> updatePlantWateringInfo(int plantId, String lastWatered) async {
+    final db = await database;
+    return await db.update(
+      'plants',
+      {'last_watered': lastWatered},
+      where: 'id = ?',
+      whereArgs: [plantId],
     );
   }
 }

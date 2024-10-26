@@ -1,3 +1,6 @@
+
+const String kAssetImgs = 'assets/imgs';
+
 class PlantItem {
   String img;
   String name;

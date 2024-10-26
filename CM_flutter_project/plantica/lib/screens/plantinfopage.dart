@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'database_helper.dart';
+import 'package:plantica/database.dart';
 
 class Plantinfopage extends StatefulWidget {
   final int plantId;
@@ -22,7 +22,7 @@ class _PlantinfopageState extends State<Plantinfopage> {
   }
 
   Future<PlantIdentification?> _fetchPlantInfo(int plantId) async {
-    final dbHelper = DatabaseHelper();
+    final dbHelper = AppDatabase();
     return await dbHelper.getPlant(plantId);
   } 
 

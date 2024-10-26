@@ -1,56 +1,101 @@
-// Importações e definições
-// TODO: ir para a main no add plant e na main chamar o plantinfopage quando carregas na planta
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
 import 'plantinfopage.dart';
-import 'database_helper.dart';
+import 'package:plantica/database.dart';
 
-class Scan extends StatefulWidget {
+class Scan extends StatelessWidget {
   const Scan({super.key});
 
   @override
-  State<Scan> createState() => _ScanState();
+  Widget build(BuildContext context) {
+    return Navigator(
+      onGenerateRoute: (RouteSettings settings) {
+        return MaterialPageRoute(
+          builder: (context) => const ScanMainPage(),
+        );
+      },
+    );
+  }
 }
 
-class _ScanState extends State<Scan> {
+class ScanMainPage extends StatefulWidget {
+  const ScanMainPage({super.key});
+
+  @override
+  State<ScanMainPage> createState() => _ScanMainPageState();
+}
+
+class _ScanMainPageState extends State<ScanMainPage> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
   String? _plantName;
   int? _plantId;
   bool _isLoading = false;
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  bool _isConnected = true;
 
   @override
   void initState() {
     super.initState();
+    _checkConnectivity();
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      _updateConnectionStatus(result);
+    });
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _showImageSourceDialog();
     });
   }
 
+  Future<void> _checkConnectivity() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    _updateConnectionStatus(connectivityResult);
+  }
+
+  void _updateConnectionStatus(ConnectivityResult result) {
+    setState(() {
+      _isConnected = result != ConnectivityResult.none;
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription.cancel();
+    super.dispose();
+  }
+
   Future<void> _showImageSourceDialog() async {
+    if (!_isConnected) {
+      return;
+    }
+    
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Choose image source'),
+          title: const Text('Choose image source'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
                 ListTile(
-                  leading: Icon(Icons.camera_alt),
-                  title: Text('Camera'),
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Camera'),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.camera);
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.photo_library),
-                  title: Text('Gallery'),
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Gallery'),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.gallery);
@@ -70,6 +115,13 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> _identifyAndSavePlant(String base64Image) async {
+    if (!_isConnected) {
+      setState(() {
+        _plantName = 'No internet connection';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -92,8 +144,7 @@ class _ScanState extends State<Scan> {
         if (data != null) {
           final plantInfo = PlantIdentification.fromJson(data);
           
-          // Save to database and get plantId
-          final dbHelper = DatabaseHelper();
+          final dbHelper = AppDatabase();
           final int id = await dbHelper.insertPlant(plantInfo);
           
           setState(() {
@@ -137,33 +188,59 @@ class _ScanState extends State<Scan> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (_image == null)
-              Text('No image selected.')
-            else if (_isLoading)
-              CircularProgressIndicator()
-            else
-              ScanPage(
-                image: _image!,
-                plantName: _plantName ?? 'Unknown Plant',
-                plantId: _plantId,
-              ),
-          ],
+      backgroundColor: const Color(0xFFF3F4F6),
+      body: SingleChildScrollView(
+        child: Center(
+          child: _isConnected
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (_image == null)
+                      const Text('No image selected.')
+                    else if (_isLoading)
+                      const CircularProgressIndicator()
+                    else
+                      ScanResultPage(
+                        image: _image!,
+                        plantName: _plantName ?? 'Unknown Plant',
+                        plantId: _plantId,
+                      ),
+                  ],
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.wifi_off, size: 100, color: Colors.red),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'No internet connection',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Please check your connection and try again.',
+                      style: TextStyle(fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _checkConnectivity,
+                      child: const Text('Try Again'),
+                    ),
+                  ],
+                ),
         ),
       ),
     );
   }
 }
 
-class ScanPage extends StatelessWidget {
+class ScanResultPage extends StatelessWidget {
   final File image;
   final String plantName;
   final int? plantId;
 
-  const ScanPage({
+  const ScanResultPage({
     required this.image,
     required this.plantName,
     required this.plantId,
@@ -195,20 +272,20 @@ class ScanPage extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 20),
-          Text(
+          const SizedBox(height: 20),
+          const Text(
             'Your plant is a',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           Text(
             plantName,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.bold,
-              color: const Color.fromARGB(255, 139, 96, 133),
+              color: Color.fromARGB(255, 139, 96, 133),
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -223,12 +300,12 @@ class ScanPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => Scan()),
+                    MaterialPageRoute(builder: (context) => const Scan()),
                   );
                 },
-                child: Text('Try Again'),
+                child: const Text('Try Again'),
               ),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[100],
@@ -242,15 +319,14 @@ class ScanPage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            Plantinfopage(plantId: plantId!),
+                        builder: (context) => Plantinfopage(plantId: plantId!),
                       ),
                     );
                   } else {
                     print('Plant ID is null');
                   }
                 },
-                child: Text('Add Plant'),
+                child: const Text('Add Plant'),
               ),
             ],
           ),
