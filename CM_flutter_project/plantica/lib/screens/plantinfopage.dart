@@ -24,7 +24,7 @@ class _PlantinfopageState extends State<Plantinfopage> {
   Future<PlantIdentification?> _fetchPlantInfo(int plantId) async {
     final dbHelper = AppDatabase();
     return await dbHelper.getPlant(plantId);
-  } 
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,8 +56,11 @@ class _PlantinfopageState extends State<Plantinfopage> {
                           borderRadius:
                               const BorderRadius.all(Radius.circular(100)),
                           image: DecorationImage(
-                            image: NetworkImage(plant.imageUrl),
+                            image: NetworkImage(plant.imageUrl ?? ''),
                             fit: BoxFit.cover,
+                            onError: (exception, stackTrace) {
+                              // Handle image loading error
+                            },
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -73,7 +76,7 @@ class _PlantinfopageState extends State<Plantinfopage> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    plant.commonName,
+                    plant.commonName ?? '',
                     style: const TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
@@ -81,7 +84,7 @@ class _PlantinfopageState extends State<Plantinfopage> {
                     ),
                   ),
                   Text(
-                    plant.scientificName,
+                    plant.scientificName ?? '',
                     style: const TextStyle(
                       fontSize: 20,
                       color: Color.fromARGB(255, 119, 118, 118),
@@ -95,39 +98,38 @@ class _PlantinfopageState extends State<Plantinfopage> {
                       children: [
                         _buildInfoCard(
                           title: 'Humidity',
-                          // TODO: Value com os valores do sensor
                           value: '10%',
-                          info: plant.watering,
+                          info: plant.watering ?? '{"max":2,"min":2}',
                         ),
                         const SizedBox(width: 20),
                         _buildInfoCard(
                           title: 'Temperature',
-                          // TODO: Value com os valores do sensor
                           value: '10ºC',
-                          info: plant.watering,
+                          info: plant.watering ?? '{"max":2,"min":2}',
                         ),
                       ],
                     ),
                   ),
                   _buildDetailsSection(
                     title: "Description",
-                    description: plant.description,
+                    description: plant.description ?? '',
                   ),
                   _buildDetailsSection(
                     title: "About watering",
-                    description: plant.bestWatering,
+                    description: plant.bestWatering ?? '',
                   ),
                   _buildDetailsSection(
-                      title: "About Lighting",
-                      description: plant.bestLightCondition),
+                    title: "About Lighting",
+                    description: plant.bestLightCondition ?? '',
+                  ),
                   _buildDetailsSection(
                     title: "Soil Type",
-                    description: plant.bestSoilType,
+                    description: plant.bestSoilType ?? '',
                   ),
-                  if (plant.toxicity.isNotEmpty)
+                  if ((plant.toxicity ?? '').isNotEmpty)
                     _buildDetailsSection(
                       title: "Toxicity",
-                      description: plant.toxicity,
+                      description: plant.toxicity ?? '',
                     ),
                 ],
               ),
@@ -143,12 +145,24 @@ class _PlantinfopageState extends State<Plantinfopage> {
     String statusInfo;
     int temp;
     int hum;
-    Map<String, dynamic> infoMap = jsonDecode(info);
-    int min = infoMap["min"];
-    int max = infoMap["max"];
+    Map<String, dynamic> infoMap;
+    
+    try {
+      infoMap = jsonDecode(info);
+    } catch (e) {
+      infoMap = {"max": 2, "min": 2};
+    }
+    
+    int min = infoMap["min"] ?? 2;
+    int max = infoMap["max"] ?? 2;
 
     if (title == "Humidity") {
-      hum = int.parse(value.replaceAll('%', ''));
+      try {
+        hum = int.parse(value.replaceAll('%', ''));
+      } catch (e) {
+        hum = 0;
+      }
+      
       if ((min == 1 && hum < 20) ||
           (min == 2 && hum < 40) ||
           (min == 3 && hum < 60)) {
@@ -161,7 +175,12 @@ class _PlantinfopageState extends State<Plantinfopage> {
         statusInfo = "Healthy";
       }
     } else if (title == "Temperature") {
-      temp = int.parse(value.replaceAll('ºC', ''));
+      try {
+        temp = int.parse(value.replaceAll('ºC', ''));
+      } catch (e) {
+        temp = 0;
+      }
+      
       if ((min == 1 && temp < 18) ||
           (min == 2 && temp < 16) ||
           (min == 3 && temp < 18)) {
@@ -240,7 +259,7 @@ class _PlantinfopageState extends State<Plantinfopage> {
                     shape: BoxShape.circle,
                   ),
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Text(
                   statusInfo,
                   style: const TextStyle(
