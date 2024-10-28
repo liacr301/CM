@@ -59,7 +59,6 @@ class _ScanMainPageState extends State<ScanMainPage> {
       }
     });
     
-    // Mostrar o diálogo de escolha de imagem assim que a página for carregada
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_isConnected && !_isDialogShowing && _image == null) {
         _showImageSourceDialog();

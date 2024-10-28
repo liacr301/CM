@@ -276,4 +276,14 @@ class AppDatabase {
       whereArgs: [plantId],
     );
   }
+  
+
+  Future<List<Map<String, dynamic>>> getAllPlants() async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.query(
+      'plants',
+      columns: ['id', 'common_name', 'scientific_name', 'image_url', 'watering'],
+    );
+    return result;
+  }
 }
