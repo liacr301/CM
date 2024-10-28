@@ -1,8 +1,11 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plantica/database.dart';
-import 'package:plantica/sensor_service.dart';
+import 'package:plantica/services/sensor_service.dart';
+import '../blocs/sensor/sensor_bloc.dart';
+import '../blocs/sensor/sensor_event.dart';
+import '../blocs/sensor/sensor_state.dart';
 
 class Plantinfopage extends StatefulWidget {
   final int plantId;
@@ -38,131 +41,134 @@ class _PlantinfopageState extends State<Plantinfopage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: FutureBuilder<PlantIdentification?>(
-        future: _plantInfoFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return BlocProvider(
+      create: (context) =>
+          SensorBloc(_sensorService)..add(FetchSensorDataEvent()),
+      child: Scaffold(
+        body: FutureBuilder<PlantIdentification?>(
+          future: _plantInfoFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (!snapshot.hasData) {
-            return const Center(child: Text('Plant not found'));
-          }
+            if (!snapshot.hasData) {
+              return const Center(child: Text('Plant not found'));
+            }
 
-          final plant = snapshot.data!;
-          return Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 100),
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(100)),
-                          image: DecorationImage(
-                            image: NetworkImage(plant.imageUrl ?? ''),
-                            fit: BoxFit.cover,
-                            onError: (exception, stackTrace) {
-                              // Handle image loading error
-                            },
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              spreadRadius: 1,
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
+            final plant = snapshot.data!;
+            return Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 100),
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(100)),
+                            image: DecorationImage(
+                              image: NetworkImage(plant.imageUrl ?? ''),
+                              fit: BoxFit.cover,
+                              onError: (exception, stackTrace) {
+                                // Handle image loading error
+                              },
                             ),
-                          ],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                spreadRadius: 1,
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    plant.commonName ?? '',
-                    style: const TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 139, 96, 133),
+                    const SizedBox(height: 20),
+                    Text(
+                      plant.commonName ?? '',
+                      style: const TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 139, 96, 133),
+                      ),
                     ),
-                  ),
-                  Text(
-                    plant.scientificName ?? '',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      color: Color.fromARGB(255, 119, 118, 118),
+                    Text(
+                      plant.scientificName ?? '',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        color: Color.fromARGB(255, 119, 118, 118),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  StreamBuilder<SensorReading>(
-                    stream: _sensorService.readingsStream,
-                    builder: (context, sensorSnapshot) {
-                      String humidityValue = '0%';
-                      String temperatureValue = '0ºC';
+                    const SizedBox(height: 20),
+                    BlocBuilder<SensorBloc, SensorState>(
+                      builder: (context, state) {
+                        String humidityValue = '0%';
+                        String temperatureValue = '0ºC';
 
-                      if (sensorSnapshot.hasData) {
-                        humidityValue =
-                            '${sensorSnapshot.data!.humidity.toStringAsFixed(0)}%';
-                        temperatureValue =
-                            '${sensorSnapshot.data!.temperature.toStringAsFixed(0)}ºC';
-                      }
+                        if (state is SensorDataLoaded) {
+                          final sensorData =
+                              state.readings.last;
+                          humidityValue =
+                              '${sensorData.humidity.toStringAsFixed(0)}%';
+                          temperatureValue =
+                              '${sensorData.temperature.toStringAsFixed(0)}ºC';
+                        }
 
-                      return Padding(
-                        padding: const EdgeInsets.all(15.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildInfoCard(
-                              title: 'Humidity',
-                              value: humidityValue,
-                              info: plant.watering ??
-                                  '{"max":2,"min":2}',
-                            ),
-                            const SizedBox(width: 20),
-                            _buildInfoCard(
-                              title: 'Temperature',
-                              value: temperatureValue,
-                              info: plant.watering ??
-                                  '{"max":2,"min":2}',
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDetailsSection(
-                    title: "Description",
-                    description: plant.description ?? '',
-                  ),
-                  _buildDetailsSection(
-                    title: "About watering",
-                    description: plant.bestWatering ?? '',
-                  ),
-                  _buildDetailsSection(
-                    title: "About Lighting",
-                    description: plant.bestLightCondition ?? '',
-                  ),
-                  _buildDetailsSection(
-                    title: "Soil Type",
-                    description: plant.bestSoilType ?? '',
-                  ),
-                  if ((plant.toxicity ?? '').isNotEmpty)
+                        return Padding(
+                          padding: const EdgeInsets.all(15.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildInfoCard(
+                                title: 'Humidity',
+                                value: humidityValue,
+                                info: plant.watering ?? '{"max":2,"min":2}',
+                              ),
+                              const SizedBox(width: 20),
+                              _buildInfoCard(
+                                title: 'Temperature',
+                                value: temperatureValue,
+                                info: plant.watering ?? '{"max":2,"min":2}',
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                     _buildDetailsSection(
-                      title: "Toxicity",
-                      description: plant.toxicity ?? '',
+                      title: "Description",
+                      description: plant.description ?? '',
                     ),
-                ],
+                    _buildDetailsSection(
+                      title: "About watering",
+                      description: plant.bestWatering ?? '',
+                    ),
+                    _buildDetailsSection(
+                      title: "About Lighting",
+                      description: plant.bestLightCondition ?? '',
+                    ),
+                    _buildDetailsSection(
+                      title: "Soil Type",
+                      description: plant.bestSoilType ?? '',
+                    ),
+                    if ((plant.toxicity ?? '').isNotEmpty)
+                      _buildDetailsSection(
+                        title: "Toxicity",
+                        description: plant.toxicity ?? '',
+                      ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
