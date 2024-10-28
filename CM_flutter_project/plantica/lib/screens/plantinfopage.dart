@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:plantica/database.dart';
+import 'package:plantica/sensor_service.dart';
 
 class Plantinfopage extends StatefulWidget {
   final int plantId;
@@ -14,11 +15,20 @@ class Plantinfopage extends StatefulWidget {
 
 class _PlantinfopageState extends State<Plantinfopage> {
   late Future<PlantIdentification?> _plantInfoFuture;
+  late SensorService _sensorService;
 
   @override
   void initState() {
     super.initState();
     _plantInfoFuture = _fetchPlantInfo(widget.plantId);
+    _sensorService = SensorService();
+    _sensorService.initialize();
+  }
+
+  @override
+  void dispose() {
+    _sensorService.dispose();
+    super.dispose();
   }
 
   Future<PlantIdentification?> _fetchPlantInfo(int plantId) async {
@@ -91,24 +101,41 @@ class _PlantinfopageState extends State<Plantinfopage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildInfoCard(
-                          title: 'Humidity',
-                          value: '10%',
-                          info: plant.watering ?? '{"max":2,"min":2}',
+                  StreamBuilder<SensorReading>(
+                    stream: _sensorService.readingsStream,
+                    builder: (context, sensorSnapshot) {
+                      String humidityValue = '0%';
+                      String temperatureValue = '0ºC';
+
+                      if (sensorSnapshot.hasData) {
+                        humidityValue =
+                            '${sensorSnapshot.data!.humidity.toStringAsFixed(0)}%';
+                        temperatureValue =
+                            '${sensorSnapshot.data!.temperature.toStringAsFixed(0)}ºC';
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.all(15.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildInfoCard(
+                              title: 'Humidity',
+                              value: humidityValue,
+                              info: plant.watering ??
+                                  '{"max":2,"min":2}',
+                            ),
+                            const SizedBox(width: 20),
+                            _buildInfoCard(
+                              title: 'Temperature',
+                              value: temperatureValue,
+                              info: plant.watering ??
+                                  '{"max":2,"min":2}',
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 20),
-                        _buildInfoCard(
-                          title: 'Temperature',
-                          value: '10ºC',
-                          info: plant.watering ?? '{"max":2,"min":2}',
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   _buildDetailsSection(
                     title: "Description",
@@ -146,13 +173,13 @@ class _PlantinfopageState extends State<Plantinfopage> {
     int temp;
     int hum;
     Map<String, dynamic> infoMap;
-    
+
     try {
       infoMap = jsonDecode(info);
     } catch (e) {
       infoMap = {"max": 2, "min": 2};
     }
-    
+
     int min = infoMap["min"] ?? 2;
     int max = infoMap["max"] ?? 2;
 
@@ -162,7 +189,7 @@ class _PlantinfopageState extends State<Plantinfopage> {
       } catch (e) {
         hum = 0;
       }
-      
+
       if ((min == 1 && hum < 20) ||
           (min == 2 && hum < 40) ||
           (min == 3 && hum < 60)) {
@@ -180,7 +207,7 @@ class _PlantinfopageState extends State<Plantinfopage> {
       } catch (e) {
         temp = 0;
       }
-      
+
       if ((min == 1 && temp < 18) ||
           (min == 2 && temp < 16) ||
           (min == 3 && temp < 18)) {
