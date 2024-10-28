@@ -171,7 +171,7 @@ class _ScanMainPageState extends State<ScanMainPage> {
         Uri.parse(
             'https://plant.id/api/v3/identification?details=common_names,url,description,taxonomy,inaturalist_id,edible_parts,watering,propagation_methods,best_watering,best_light_condition,best_soil_type,toxicity&language=en'),
         headers: {
-          'Api-Key': 'KYRgRxXJyjuviR4rUORZ5sKej8zsaE5ixyPOqIUXP0cQWhpkc8',
+          'Api-Key': 'YHqKzBTy3AVgmIEc76xyUC7nwgUiQLfrkPtIyL46lZxQzK96qu',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
