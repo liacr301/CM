@@ -7,6 +7,7 @@ class SensorService {
   final double _baseHumidity = 55.0;    // humidade média ambiente
   final List<SensorReading> _historicalReadings = [];
   final StreamController<SensorReading> _sensorReadingController = StreamController<SensorReading>.broadcast();
+  Timer? _timer; // Define o timer como uma variável membro da classe
 
   SensorService() {
     _generateInitialHistory();
@@ -45,15 +46,15 @@ class SensorService {
   }
 
   void initialize() {
-    // Simular atualizações em tempo real das leituras a cada 5 segundos
-    Timer.periodic(Duration(seconds: 3), (timer) {
+    _timer = Timer.periodic(Duration(seconds: 20), (timer) {
       final newReading = _generateReading(DateTime.now());
       _sensorReadingController.add(newReading); // Adiciona nova leitura ao stream
     });
   }
 
   void dispose() {
-    _sensorReadingController.close(); // Fecha o StreamController
+    _timer?.cancel(); 
+    _sensorReadingController.close(); 
   }
 
   Stream<SensorReading> get sensorReadings => _sensorReadingController.stream;
