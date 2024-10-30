@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:plantica/database.dart';  // Certifique-se de importar seu banco de dados local
-import 'login.dart';  // Certifique-se de que a tela de login está corretamente configurada
+import 'package:plantica/database.dart';
+import 'login.dart'; 
 
 class RegisterPage extends StatelessWidget {
   final TextEditingController _nameController = TextEditingController();
@@ -21,14 +21,12 @@ class RegisterPage extends StatelessWidget {
       return;
     }
 
-    // Registro no banco de dados
     await AppDatabase().registerUser(name ,username, birthdate, password);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Sucess! Login now.')),
     );
 
-    // Redireciona para a página de login
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
@@ -83,9 +81,8 @@ class RegisterPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Campo de Nome
                     TextField(
-                      controller: _nameController,  // Controlador adicionado
+                      controller: _nameController, 
                       decoration: InputDecoration(
                         hintText: 'Name',
                         filled: true,
@@ -99,9 +96,8 @@ class RegisterPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Campo de Username
                     TextField(
-                      controller: _usernameController,  // Controlador adicionado
+                      controller: _usernameController, 
                       decoration: InputDecoration(
                         hintText: 'Username',
                         filled: true,
@@ -115,9 +111,8 @@ class RegisterPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Campo de Data de Nascimento
                     TextField(
-                      controller: _birthdateController,  // Controlador adicionado
+                      controller: _birthdateController, 
                       decoration: InputDecoration(
                         hintText: 'Birthdate',
                         filled: true,
@@ -131,9 +126,8 @@ class RegisterPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Campo de Senha
                     TextField(
-                      controller: _passwordController,  // Controlador adicionado
+                      controller: _passwordController, 
                       obscureText: true,
                       decoration: InputDecoration(
                         hintText: 'Password',
@@ -158,7 +152,7 @@ class RegisterPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
-                        onPressed: () => _register(context),  // Lógica de registro
+                        onPressed: () => _register(context), 
                         child: const Text(
                           'Register',
                           style: TextStyle(
@@ -178,7 +172,6 @@ class RegisterPage extends StatelessWidget {
                         ),
                         TextButton(
                           onPressed: () {
-                            // Navega para a tela de login
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(builder: (context) => LoginPage()),

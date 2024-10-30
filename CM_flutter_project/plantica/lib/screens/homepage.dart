@@ -2,11 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:plantica/const.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:plantica/database.dart';
+import 'package:plantica/screens/scanpage.dart';
 import 'package:plantica/sensor_service.dart';
 import 'plantinfopage.dart';
 import 'dart:convert';
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  late List<Map<String, dynamic>> _plants = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPlantsFromDatabase();
+  }
+
+  Future<void> _fetchPlantsFromDatabase() async {
+    final dbHelper = AppDatabase();
+    _plants = await dbHelper.getAllPlants();
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,25 +73,27 @@ class Home extends StatelessWidget {
           ),
         ],
       ),
-      body: myPlants.isEmpty ? HomeWithoutPlants() : PlantList(),
+      body: _plants.isEmpty ? HomeWithoutPlants() : PlantList(plants: _plants),
       backgroundColor: Color(0xFFF3F4F6),
     );
   }
 }
 
 class PlantList extends StatefulWidget {
+  final List<Map<String, dynamic>> _plants;
+
+  PlantList({required List<Map<String, dynamic>> plants}) : _plants = plants;
+
   @override
-  _PlantListState createState() => _PlantListState();
+  State<PlantList> createState() => _PlantListState();
 }
 
 class _PlantListState extends State<PlantList> {
-  late List<Map<String, dynamic>> _plants = [];
   late SensorService _sensorService;
 
   @override
   void initState() {
     super.initState();
-    _fetchPlantsFromDatabase();
     _sensorService = SensorService();
     _sensorService.initialize();
   }
@@ -82,21 +104,15 @@ class _PlantListState extends State<PlantList> {
     super.dispose();
   }
 
-  Future<void> _fetchPlantsFromDatabase() async {
-    final dbHelper = AppDatabase();
-    _plants = await dbHelper.getAllPlants();
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(left: 4),
       child: ListView.builder(
         padding: const EdgeInsets.all(20),
-        itemCount: _plants.length,
+        itemCount: widget._plants.length,
         itemBuilder: (BuildContext context, int index) {
-          final plant = _plants[index];
+          final plant = widget._plants[index];
           return GestureDetector(
             onTap: () {
               Navigator.push(
@@ -172,8 +188,8 @@ class _PlantListState extends State<PlantList> {
                               String statusInfo = getPlantStatus(
                                 title: 'Humidity',
                                 value: humidityValue,
-                                info: plant['humidity_info']??
-                                  '{"max":2,"min":2}',
+                                info: plant['humidity_info'] ??
+                                    '{"max":2,"min":2}',
                               );
 
                               return Container(
@@ -246,8 +262,9 @@ class HomeWithoutPlants extends StatelessWidget {
             child: InkWell(
               customBorder: CircleBorder(),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('This is a snackbar')),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Scan()),
                 );
               },
               child: Container(
