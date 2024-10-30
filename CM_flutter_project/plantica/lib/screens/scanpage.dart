@@ -185,7 +185,7 @@ class _ScanMainPageState extends State<ScanMainPage> {
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
         if (data != null) {
-          final plantInfo = PlantIdentification.fromJson(data);
+          final plantInfo = DatabasePlantIdentification.fromJson(data);
 
           final dbHelper = AppDatabase();
           try {
@@ -396,7 +396,7 @@ class ScanResultPage extends StatelessWidget {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => Plantinfopage(
+                            builder: (context) => PlantInfoPage(
                               plantId: plantId!,
                             ),
                           ),

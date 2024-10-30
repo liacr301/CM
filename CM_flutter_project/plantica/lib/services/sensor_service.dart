@@ -1,61 +1,110 @@
-import 'dart:math';
 import 'dart:async';
-import '../models/sensor_reading.dart';
+import 'dart:math' as math;
+import 'package:plantica/models/sensor_reading.dart';
 
 class SensorService {
-  final double _baseTemperature = 22.0; // temperatura média ambiente
-  final double _baseHumidity = 55.0;    // humidade média ambiente
+  final _readingsController = StreamController<SensorReading>.broadcast();
+  Timer? _timer;
   final List<SensorReading> _historicalReadings = [];
-  final StreamController<SensorReading> _sensorReadingController = StreamController<SensorReading>.broadcast();
-  Timer? _timer; // Define o timer como uma variável membro da classe
+  final double _baseTemperature = 22.0;
+  final double _baseHumidity = 55.0;
 
-  SensorService() {
+  Stream<SensorReading> get readingsStream => _readingsController.stream;
+  List<SensorReading> get historicalReadings =>
+      List.unmodifiable(_historicalReadings);
+
+  Future<void> initialize() async {
     _generateInitialHistory();
+    startRealTimeUpdates();
+  }
+
+  void startRealTimeUpdates() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      final reading = _generateReading();
+      _addReading(reading);
+    });
   }
 
   void _generateInitialHistory() {
     final now = DateTime.now();
-    for (int i = 0; i < 24; i++) {
+    for (int i = 24; i >= 0; i--) {
       final timestamp = now.subtract(Duration(hours: i));
-      _historicalReadings.add(_generateReading(timestamp));
+      final reading = _generateHistoricalReading(timestamp);
+      _historicalReadings.add(reading);
     }
   }
 
-  SensorReading _generateReading(DateTime timestamp) {
-    final tempVariation = (sin((timestamp.hour - 4) * pi / 10) * 2.0);
-    final humidityVariation = (-sin((timestamp.hour - 4) * pi / 10) * 5.0);
+  SensorReading _generateReading() {
+    return _generateHistoricalReading(DateTime.now());
+  }
 
-    final tempNoise = (Random().nextDouble() - 0.5) * 0.5;
-    final humidityNoise = (Random().nextDouble() - 0.5) * 2.0;
+  SensorReading _generateHistoricalReading(DateTime timestamp) {
+    final hour = timestamp.hour;
+
+    final tempVariation = math.sin((hour - 4) * math.pi / 10) * 2.0;
+
+    final humidityVariation = -math.sin((hour - 4) * math.pi / 10) * 5.0;
+
+    final tempNoise = (math.Random().nextDouble() - 0.5) * 0.5;
+    final humidityNoise = (math.Random().nextDouble() - 0.5) * 2.0;
 
     double temperature = _baseTemperature + tempVariation + tempNoise;
     double humidity = _baseHumidity + humidityVariation + humidityNoise;
 
     humidity = humidity.clamp(0.0, 100.0);
 
+    temperature = double.parse(temperature.toStringAsFixed(1));
+    humidity = double.parse(humidity.toStringAsFixed(1));
+
     return SensorReading(
       timestamp: timestamp,
-      temperature: double.parse(temperature.toStringAsFixed(1)),
-      humidity: double.parse(humidity.toStringAsFixed(1)),
+      temperature: temperature,
+      humidity: humidity,
     );
   }
 
-  Future<List<SensorReading>> fetchReadings() async {
-    await Future.delayed(Duration(seconds: 1));
-    return List.unmodifiable(_historicalReadings);
+  void _addReading(SensorReading reading) {
+    _historicalReadings.add(reading);
+
+    while (_historicalReadings.length > 288) {
+      _historicalReadings.removeAt(0);
+    }
+
+    _readingsController.add(reading);
   }
 
-  void initialize() {
-    _timer = Timer.periodic(Duration(seconds: 20), (timer) {
-      final newReading = _generateReading(DateTime.now());
-      _sensorReadingController.add(newReading); // Adiciona nova leitura ao stream
-    });
+  double getAverageTemperature([int minutes = 60]) {
+    return _getAverage(minutes, (reading) => reading.temperature);
+  }
+
+  double getAverageHumidity([int minutes = 60]) {
+    return _getAverage(minutes, (reading) => reading.humidity);
+  }
+
+  double _getAverage(int minutes, num Function(SensorReading) selector) {
+    final now = DateTime.now();
+    final readings = _historicalReadings.where((reading) =>
+        reading.timestamp.isAfter(now.subtract(Duration(minutes: minutes))));
+
+    if (readings.isEmpty) return 0.0;
+
+    final sum = readings.map(selector).reduce((a, b) => a + b);
+    return double.parse((sum / readings.length).toStringAsFixed(1));
+  }
+
+  bool isTemperatureInRange(double minTemp, double maxTemp) {
+    final currentTemp = _historicalReadings.last.temperature;
+    return currentTemp >= minTemp && currentTemp <= maxTemp;
+  }
+
+  bool isHumidityInRange(double minHumidity, double maxHumidity) {
+    final currentHumidity = _historicalReadings.last.humidity;
+    return currentHumidity >= minHumidity && currentHumidity <= maxHumidity;
   }
 
   void dispose() {
-    _timer?.cancel(); 
-    _sensorReadingController.close(); 
+    _timer?.cancel();
+    _readingsController.close();
   }
-
-  Stream<SensorReading> get sensorReadings => _sensorReadingController.stream;
 }
