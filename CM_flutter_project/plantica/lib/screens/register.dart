@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:plantica/database.dart';
-import 'login.dart'; 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:plantica/bloc/auth_bloc.dart';
+import 'package:plantica/bloc/auth_event.dart';
+import 'package:plantica/bloc/auth_state.dart';
+import 'login.dart';
 
 class RegisterPage extends StatelessWidget {
   final TextEditingController _nameController = TextEditingController();
@@ -8,190 +11,196 @@ class RegisterPage extends StatelessWidget {
   final TextEditingController _birthdateController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  Future<void> _register(BuildContext context) async {
-    String name = _nameController.text.trim();
-    String username = _usernameController.text.trim();
-    String birthdate = _birthdateController.text.trim();
-    String password = _passwordController.text.trim();
-
-    if (username.isEmpty || password.isEmpty || name.isEmpty || birthdate.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please, fill all the fields!')),
-      );
-      return;
-    }
-
-    await AppDatabase().registerUser(name ,username, birthdate, password);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sucess! Login now.')),
-    );
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-    );
-  }
+  RegisterPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 50),
-              const Text(
-                'Welcome to Plantica',
-                style: TextStyle(
-                  fontFamily: 'Serif',
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromRGBO(95, 113, 97, 1),
+    bool isNavigated = false; // Flag to prevent duplicate navigation
+
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is RegistrationSuccess && !isNavigated) {
+          isNavigated = true; // Set flag to prevent duplicate navigation
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Success! Login now.')),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+          );
+        } else if (state is AuthFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF3F4F6),
+        body: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 50),
+                const Text(
+                  'Welcome to Plantica',
+                  style: TextStyle(
+                    fontFamily: 'Serif',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromRGBO(95, 113, 97, 1),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Let’s start taking care of your plants!',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
+                const SizedBox(height: 10),
+                const Text(
+                  'Lets start taking care of your plants!',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
-              Container(
-                width: 350,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD8CFC4),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.transparent,
-                      radius: 40,
-                      child: Icon(
-                        Icons.emoji_nature_outlined,
-                        size: 64,
-                        color: Color.fromRGBO(95, 113, 97, 1),
+                const SizedBox(height: 40),
+                Container(
+                  width: 350,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD8CFC4),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      const CircleAvatar(
+                        backgroundColor: Colors.transparent,
+                        radius: 40,
+                        child: Icon(
+                          Icons.emoji_nature_outlined,
+                          size: 64,
+                          color: Color.fromRGBO(95, 113, 97, 1),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: _nameController, 
-                      decoration: InputDecoration(
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _nameController,
                         hintText: 'Name',
-                        filled: true,
-                        fillColor: const Color(0xFFEFE7D6),
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
-                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: _usernameController, 
-                      decoration: InputDecoration(
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _usernameController,
                         hintText: 'Username',
-                        filled: true,
-                        fillColor: const Color(0xFFEFE7D6),
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
-                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: _birthdateController, 
-                      decoration: InputDecoration(
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _birthdateController,
                         hintText: 'Birthdate',
-                        filled: true,
-                        fillColor: const Color(0xFFEFE7D6),
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
-                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: _passwordController, 
-                      obscureText: true,
-                      decoration: InputDecoration(
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _passwordController,
                         hintText: 'Password',
-                        filled: true,
-                        fillColor: const Color(0xFFEFE7D6),
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
-                        ),
+                        isPassword: true,
                       ),
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(95, 113, 97, 1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        onPressed: () => _register(context), 
-                        child: const Text(
-                          'Register',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                          ),
-                        ),
+                      const SizedBox(height: 30),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromRGBO(95, 113, 97, 1),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              onPressed: state is AuthLoading
+                                  ? null
+                                  : () {
+                                      if (_nameController.text.trim().isEmpty ||
+                                          _usernameController.text.trim().isEmpty ||
+                                          _birthdateController.text.trim().isEmpty ||
+                                          _passwordController.text.trim().isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                              content: Text('Please fill all fields!')),
+                                        );
+                                        return;
+                                      }
+                                      FocusScope.of(context).unfocus(); // Dismiss keyboard
+                                      context.read<AuthBloc>().add(
+                                            RegisterRequested(
+                                              name: _nameController.text.trim(),
+                                              username: _usernameController.text.trim(),
+                                              birthdate: _birthdateController.text.trim(),
+                                              password: _passwordController.text.trim(),
+                                            ),
+                                          );
+                                    },
+                              child: state is AuthLoading
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : const Text(
+                                      'Register',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Already have an account?",
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => LoginPage()),
-                            );
-                          },
-                          child: const Text(
-                            'Sign in here',
-                            style: TextStyle(
-                              color: Color.fromRGBO(95, 113, 97, 1),
-                              fontWeight: FontWeight.bold,
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Already have an account?",
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (context) => LoginPage()),
+                              );
+                            },
+                            child: const Text(
+                              'Sign in here',
+                              style: TextStyle(
+                                color: Color.fromRGBO(95, 113, 97, 1),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    bool isPassword = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword,
+      decoration: InputDecoration(
+        hintText: hintText,
+        filled: true,
+        fillColor: const Color(0xFFEFE7D6),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
         ),
       ),
     );

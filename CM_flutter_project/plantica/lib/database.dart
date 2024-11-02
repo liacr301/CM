@@ -2,8 +2,6 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
 
-// TODO: tirar o lastWatered e wateringFrequency do construtor
-
 class PlantIdentification {
   final int? id;
   final int? userId;
