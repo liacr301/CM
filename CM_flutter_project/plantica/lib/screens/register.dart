@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:plantica/bloc/auth_bloc.dart';
-import 'package:plantica/bloc/auth_event.dart';
-import 'package:plantica/bloc/auth_state.dart';
+import 'package:plantica/bloc/auth/auth_bloc.dart';
+import 'package:plantica/bloc/auth/auth_event.dart';
+import 'package:plantica/bloc/auth/auth_state.dart';
 import 'login.dart';
 
 class RegisterPage extends StatelessWidget {

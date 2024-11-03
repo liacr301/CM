@@ -42,7 +42,7 @@ class _MainPageState extends State<MainPage>
           controller: _tabController,
           children: [
             Home(),
-            Scan(),
+            ScanPage(),
             Profile(),
           ],
         ),

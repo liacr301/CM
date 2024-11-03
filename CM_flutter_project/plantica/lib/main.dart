@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:plantica/bloc/auth_bloc.dart';
+import 'package:plantica/bloc/auth/auth_bloc.dart';
+import 'package:plantica/bloc/scan/scan_bloc.dart'; 
 import 'package:plantica/screens/login.dart';
 import 'package:plantica/main_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:plantica/database.dart'; 
+import 'package:plantica/database.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -19,12 +20,12 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool _isLoggedIn = false;
-  late final AppDatabase appDatabase; 
+  late final AppDatabase appDatabase;
 
   @override
   void initState() {
     super.initState();
-    appDatabase = AppDatabase(); 
+    appDatabase = AppDatabase();
     _checkLoginStatus();
   }
 
@@ -39,11 +40,29 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthBloc(database: appDatabase), 
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: _isLoggedIn ? MainPage() : LoginPage(),
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider.value(
+          value: appDatabase,
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => AuthBloc(
+              database: context.read<AppDatabase>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => ScanBloc(
+              database: context.read<AppDatabase>(),
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: _isLoggedIn ? const MainPage() : LoginPage(),
+        ),
       ),
     );
   }

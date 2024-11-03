@@ -264,7 +264,7 @@ class HomeWithoutPlants extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Scan()),
+                  MaterialPageRoute(builder: (context) => ScanPage()),
                 );
               },
               child: Container(
